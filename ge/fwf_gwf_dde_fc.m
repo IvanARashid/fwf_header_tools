@@ -1,4 +1,4 @@
-function [] = fwf_gwf_dde_fc(wf_num, encoding_time, NOW_txt_path, bvalues_array, no_of_directions_array, wf_idx_array)
+function [] = fwf_gwf_dde_fc(wf_num, encoding_time, NOW_txt_path, bvalues_array, no_of_directions_array, wf_idx_array, plot)
 
 % Script that creates a set of DDE flow-compensated waveforms for use on a
 % GE scanner with the MDD pulse sequence. The 
@@ -21,6 +21,9 @@ function [] = fwf_gwf_dde_fc(wf_num, encoding_time, NOW_txt_path, bvalues_array,
 % - wf_idx_array: 
 %       Array of ints (1 or 2). For each bvalue, specify whether
 %       1 for flow compensation, 2 for no flow compensation
+% - plot:
+%       int. 1 if the first waveform is to be plotted. 0 or unspecified if
+%       no plot is desired.
 
 % Outputs:
 % Saves xps containing waveform information as json
@@ -32,6 +35,10 @@ function [] = fwf_gwf_dde_fc(wf_num, encoding_time, NOW_txt_path, bvalues_array,
 
 % Ivan A. Rashid
 % Lund University, 25th Aug 2023
+
+if nargin < 7
+    plot = 0;
+end
 
 
 
@@ -81,13 +88,6 @@ GWF = cat(3,GWF_FC, GWF_NC);
 % mddGE_matlab library
 [AA, BB, g_normalize] = mddGE_make_waveforms(GWF,RF,DT,bvalues_array, no_of_directions_array, wf_idx_array);
 
-% Shuffle the waveforms randomly in order to diversify the acquisitions
-% over time
-waveform_size = size(AA);
-indices = randperm(waveform_size(2));
-AA_random = AA(:,indices,:);
-BB_random = BB(:,indices,:);
-
 % The filename must be of the type wfgXXXpre180.wav and wfgXXXpost180.wav
 %wf_num = 900+(time_pre180+time_180+time_post180)*1e3;
 fname_pre = sprintf('wfg%03dpre180.wav', wf_num);
@@ -96,14 +96,16 @@ fname_post = sprintf('wfg%03dpost180.wav', wf_num);
 % Write waveforms
 % mddGE_write_wav, a script from Emil Ljungbergs library
 desc = '';
-out_AA = mddGE_write_wav(fname_pre, AA_random, g_normalize, desc);
-out_BB = mddGE_write_wav(fname_post, BB_random, g_normalize, desc);
+out_AA = mddGE_write_wav(fname_pre, AA, g_normalize, desc);
+out_BB = mddGE_write_wav(fname_post, BB, g_normalize, desc);
 
 %[grad,N,params,desc] = mddGE_read_wav('wfg999post180.wav');
 
 % Plot waveform (sanity check)
 % Uses mddGE_plot_wav, a script from Emil Ljungbergs library
-[grad_wf, grad_rf, grad_dt] = mddGE_plot_wav(fname_post, 1, time_180);
+if plot == 1
+    [grad_wf, grad_rf, grad_dt] = mddGE_plot_wav(fname_post, 1, time_180);
+end
 
 
 
@@ -117,11 +119,11 @@ grad_wait = zeros(n_grad_wait,3);
 % Extract gradient waveform information. b-value, alpha, etc.
 xps = [];
 for i=1:sum(no_of_directions_array)
-    grad_wf1 = cat(1, squeeze(AA_random(:,i,:)), grad_wait, squeeze(BB_random(:,i,:)));
+    grad_wf1 = cat(1, squeeze(AA(:,i,:)), grad_wait, squeeze(BB(:,i,:)));
     
-    n_pre = size(AA_random);
-    grad_rf = ones(size(grad_wf1,1),1);
-    grad_rf(1,n_pre(1)+round(n_grad_wait/2):end) = -1;
+    n_pre = size(AA);
+    grad_rf = ones(size(grad_wf1,1), 1);
+    grad_rf(n_pre(1)+round(n_grad_wait/2):end, 1) = -1;
     
     wf_xps = gwf_to_pars(grad_wf1, grad_rf, grad_dt);
     xps = [xps wf_xps];
