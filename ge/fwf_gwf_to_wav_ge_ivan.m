@@ -87,38 +87,13 @@ if plot == 1
     [grad_wf, grad_rf, grad_dt] = mddGE_plot_wav(fname_post, 1, 7e-3);
 end
 
+% Create the xps
+[gwfl, rfl, dtl] = fwf_wav_to_gwfl(fname_pre);
+xps = fwf_xps_from_gwfl(gwfl, rfl, dtl);
 
-
-
-% Extract gradient waveform information. b-value, alpha, etc.
-xps = [];
-
-dt = 4e-6; % Default gradient refresh rate for GE systems
-n_rf180_duration = round(system.rf180_duration*1e-3/dt);
-grad_rf180 = zeros(n_rf180_duration, 3);
-
-% DEV: NEED TO FIX XPS CREATION. LOOK INTO USING fwf_xps_from_gwfl in
-% /common
-for i=1:sum(no_of_directions_array)
-    grad_wf = cat(1, squeeze(AA(:,i,:)), grad_rf180, squeeze(BB(:,i,:)));
-    
-    n_pre = size(AA);
-    grad_rf = ones(size(grad_wf,1), 1);
-    grad_rf(n_pre(1)+round(n_rf180_duration/2):end, 1) = -1;
-    
-    wf_xps = gwf_to_pars(grad_wf, grad_rf, dt);
-    xps = [xps wf_xps];
-end
- 
-
-% Write xps to json file
-%xps_json = jsonencode(xps);
-
-%fname_output = sprintf("wfnum%03d.json", wf_num);
-%fid = fopen(fname_output, "w");
-%fprintf(fid, "%s", xps_json);
-%fclose(fid);
-
+% Save the xps
+fname_xps = sprintf('wfnum%03d_xps', wf_num);
+save(fname_xps, "xps");
 
 
 
