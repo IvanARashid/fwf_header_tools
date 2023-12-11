@@ -1,7 +1,7 @@
-function [grad_wfl, grad_rfl, grad_dtl] = fwf_wav_to_gwfl2(fname, delay)
+function [grad_wfl, grad_rfl, grad_dtl] = fwf_wav_to_gwfl(fname, delay)
 
 if nargin < 2
-    delay = 7e-3;
+    delay = 6.7e-3;
 end
 
 % Parse the filename, can be either pre or post
@@ -44,7 +44,7 @@ grad_wfl = cat(1, squeeze(permute(grad_pre(:,:,:), [1 3 2])), grad_wait, squeeze
 grad_wfl = num2cell(grad_wfl, [1 2]);
 
 n_wfs = numel(grad_wfl);
-grad_rf = ones(size(grad_wfl,1),1);
+grad_rf = ones(size(grad_wfl{1},1),1);
 grad_rf(n_pre+round(n_grad_wait/2):end,1) = -1;
 grad_rfl = repelem(grad_rf, 1, 1, n_wfs);
 grad_rfl = num2cell(grad_rfl, [1 2]);
