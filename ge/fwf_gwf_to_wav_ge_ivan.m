@@ -1,36 +1,40 @@
 function [] = fwf_gwf_to_wav_ge_ivan(GWF, RF, DT, wf_num, bvalues_array, no_of_directions_array, wf_idx_array, system_ID, plot)
 
-% Script that creates a set of DDE flow-compensated waveforms for use on a
-% GE scanner with the MDD pulse sequence. The 
+% Script that creates a set of diffusion encoding shells based on inputs of
+% gradient waveform array, rf array, and time resolution.
+%
+% The script is aimed at GE implementation of a free waveform sequence
+% distributed by Tim Sprenger.
+%
+% The script requires read/write functions of .wav, which are not openly
+% distributed. Contact Tim Sprenger @ GE to obtain them.
 
 % Inputs:
-% - wf_num: 
-%       int 0-999 for naming the waveform as used by the GE interfac
-% - encoding_time: 
-%       Even int, total encoding time in [ms]
-% - NOW_txt_path: 
-%       Path to a txt-file saved from the NOW GUI, containing the
-%       DDE waveforms. It is assumed that these are 1st order motion compensated
-%       as the script creates its own non-compensated waveforms from these.
-%       This is accomplished by inverting the post-RF waveforms, made
-%       possible by the use of DDE.
-% - bvalues_array: 
-%       Array for b-values expressed in ms/um2
-% - no_of_directions_array: 
-%       Array of ints, number of direction for each b-value
-% - wf_idx_array: 
-%       Array of ints (1 or 2). For each bvalue, specify whether
-%       1 for flow compensation, 2 for no flow compensation
-% - plot:
-%       int. 1 if the first waveform is to be plotted. 0 or unspecified if
-%       no plot is desired.
+% - GWF                     : Gradient waveform array. Should be in units 
+%                             of T/m.
+% - RF                      : RF array. 1 pre-180, -1 post-180
+% - DT                      : Time resolution of the GWF array
+% - wf_num                  : The number to be assigned to the waveform 
+%                             files. Should be between 1 and 999.
+% - bvalues_array           : Array of b-values for the shell
+% - no_of_directions_array  : The number of directions to be distributed
+%                             for the shell
+% - wf_idx_array            : The waveform index, for when multiple
+%                             different waveforms are used.
+% - system_ID               : System ID for safety check of gradient
+%                             limits. See the prompt for definitions.
+% - plot                    : 0 to skip plotting. > 0 to plot the waveform
+%                             with that index in the file. Note that it is
+%                             better to use the plot-function to plot
+%                             specific waveforms rather than to re-run
+%                             this script every time.
 
 % Outputs:
-% Saves xps containing waveform information as json
-% Saves wav-files that can be executed on a GE system
+% Saves xps containing waveform information as .mat-file
+% Saves wav-files that can be executed on a GE system with the right
+% sequence
 
 % Dependencies:
-% fwf_header_tools
 % mddGE_matlab by Emil Ljungberg (Lund University), not public
 
 % Ivan A. Rashid
@@ -85,8 +89,8 @@ end
 
 % Plot waveform (sanity check)
 % Uses mddGE_plot_wav, a script from Emil Ljungbergs library
-if plot == 1
-    [grad_wf, grad_rf, grad_dt] = mddGE_plot_wav(fname_post, 1, 7e-3);
+if plot > 0
+    [grad_wf, grad_rf, grad_dt] = mddGE_plot_wav(fname_post, plot, 7e-3);
 end
 
 % Create the xps
