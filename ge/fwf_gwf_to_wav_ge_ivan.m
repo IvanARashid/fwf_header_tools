@@ -1,4 +1,4 @@
-function [] = fwf_gwf_to_wav_ge_ivan(GWF, RF, DT, wf_num, bvalues_array, no_of_directions_array, wf_idx_array, system_ID, plot)
+function [] = fwf_gwf_to_wav_ge_ivan(GWF, RF, DT, wf_num, bvalues_array, no_of_directions_array, wf_idx_array, system_ID, plot, padded)
 
 % Script that creates a set of diffusion encoding shells based on inputs of
 % gradient waveform array, rf array, and time resolution.
@@ -28,6 +28,9 @@ function [] = fwf_gwf_to_wav_ge_ivan(GWF, RF, DT, wf_num, bvalues_array, no_of_d
 %                             better to use the plot-function to plot
 %                             specific waveforms rather than to re-run
 %                             this script every time.
+% - padded                  : 0 if waveforms are not padded, 1 if waveforms
+%                             are padded with zeros. Important as zeros are
+%                             a disregarded in one of the functions
 
 % Outputs:
 % Saves xps containing waveform information as .mat-file
@@ -51,15 +54,31 @@ end
 
 if nargin < 9
     plot = 0;
+    padded = 0;
 end
 
 % Get the system limits
 system = fwf_ge_systems(system_ID);
 
+% Work-around to create extended/padded waveforms
+if padded == 1
+    GWF(end-1,1,:) = 1e-14; % As end of waveform is detected as the last 0
+    % we move it by changing the next-to-last element to above the zero
+    % threshold of 1e-15.
+end
+
 % Create the waveforms
 % Uses mddGE_make_waveforms, a script from Emil Ljungbers library
 % mddGE_matlab library
 [AA, BB, g_normalize] = mddGE_make_waveforms(GWF,RF,DT,bvalues_array, no_of_directions_array, wf_idx_array);
+
+% Continuation of work-around to create extended/padded waveforms
+if padded == 1
+    % Reverts the change we did earlier
+    BB(end-1,:,:) = 0;
+    BB(end-1,:,:) = 0;
+    BB(end-1,:,:) = 0;
+end
 
 % The filename must be of the type wfgXXXpre180.wav and wfgXXXpost180.wav
 fname_pre = sprintf('wfg%03dpre180.wav', wf_num);
