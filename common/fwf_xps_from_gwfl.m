@@ -19,6 +19,7 @@ gMom_0 = zeros(n_vols, 3);
 gMom_1 = zeros(n_vols, 3);
 gMom_2 = zeros(n_vols, 3);
 gMom_3 = zeros(n_vols, 3);
+alpha_norm = zeros(n_vols, 1);
 
 for i = 1:n_vols
 
@@ -33,13 +34,17 @@ for i = 1:n_vols
     btmt(i,:)   = tm_3x3_to_1x6( B.*M );
 
     % Exchange weighting
-    gamma(i,:)  = gwf_to_tex(gwf, rf, dt);
+    %gamma(i,:)  = gwf_to_tex(gwf, rf, dt);
 
     % Gradient moments
     gMom_0(i,:) = fwf_gwf_to_motion_enc(gwf, rf, dt, 0, 0);
     gMom_1(i,:) = fwf_gwf_to_motion_enc(gwf, rf, dt, 1, 0);
     gMom_2(i,:) = fwf_gwf_to_motion_enc(gwf, rf, dt, 2, 0);
     gMom_3(i,:) = fwf_gwf_to_motion_enc(gwf, rf, dt, 3, 0);
+    
+    % flow encoding
+    alpha_norm(i,:) = (sum(gMom_1(i,:).^2));
+
 
 end
 
@@ -66,7 +71,7 @@ xps.bm       = bm_par.trace;
 xps.bm_delta = bm_par.delta;
 xps.bm_eta   = bm_par.eta;
 
-xps.gamma    = gamma/3; % Using Arthur convention
+%xps.gamma    = gamma/3; % Using Arthur convention
 
 xps.gMom_0   = gMom_0;
 xps.gMom_1   = gMom_1;
@@ -75,6 +80,10 @@ xps.gMom_3   = gMom_3;
 
 xps.s_ind    = s_ind;
 xps.wf_ind   = wf_ind;
+
+% flow encoding
+xps.alpha_norm = alpha_norm;
+
 
 
 
